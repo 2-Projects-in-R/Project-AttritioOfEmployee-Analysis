@@ -1,1 +1,3 @@
-# Project-AttritioOfEmployee-Analysis
+# Project-Attrition Of Employee-Analysis
+
+The project, "Attrition Of Employee-Analysis," is centered around analyzing factors contributing to employee attrition with the goal of developing a forecasting model to predict whether an employee is likely to resign. By examining various features and patterns within employee-related data, the project seeks to uncover insights that can be utilized to anticipate and understand the likelihood of attrition. The analysis aims to provide valuable information for human resources and management to proactively address retention challenges and implement strategies to mitigate employee turnover.
