@@ -1,0 +1,348 @@
+---
+title: "Project: Attrition of Employee"
+author: "Yamileth Hercules"
+date: "2023-03-01"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(readr)
+```
+
+```{r}
+
+general_data <- read.csv('general_data.csv', header = TRUE)
+employee_survey <- read.csv('employee_survey_data.csv', header = TRUE)
+manager_survey <- read.csv('manager_survey_data.csv', header = TRUE)
+joined <- left_join(general_data, employee_survey, by = c('EmployeeID'))
+
+joined_data <- left_join(joined , manager_survey,by = c('EmployeeID'))
+
+joined_data
+```
+
+
+```{r}
+str(joined_data)
+```
+
+The data type seems to have the data that below to it. Just the education folowing variables seems to be express as integer but seems to be categorcial variables:
+- Education 
+- Job level
+-EnvironmentSatisfaction
+-JobSatisfaction 
+-WorkLifeBalance
+JobInvolvement 
+-PerformanceRating
+
+We are going to read the categorical variables as factor in R
+
+```{r}
+joined_data$Attrition<- as.factor(joined_data$Attrition) 
+joined_data$BusinessTravel<- as.factor(joined_data$BusinessTravel) 
+joined_data$Department<- as.factor(joined_data$Department) 
+joined_data$EducationField<- as.factor(joined_data$EducationField) 
+joined_data$Education<- as.factor(joined_data$Education) 
+joined_data$Gender<- as.factor(joined_data$Gender) 
+joined_data$JobRole <- as.factor(joined_data$JobRole) 
+joined_data$MaritalStatus<- as.factor(joined_data$MaritalStatus) 
+joined_data$EnvironmentSatisfaction<- as.factor(joined_data$EnvironmentSatisfaction) 
+joined_data$JobSatisfaction <- as.factor(joined_data$JobSatisfaction) 
+joined_data$WorkLifeBalance<- as.factor(joined_data$WorkLifeBalance) 
+joined_data$JobInvolvement<- as.factor(joined_data$JobInvolvement) 
+joined_data$PerformanceRating <- as.factor(joined_data$PerformanceRating) 
+
+```
+
+## 1)Missing Values 
+
+### a) State types of Missing Data
+
+It seems that in the dataset is Missing Completely at Random (MCAR): 
+This type of missing data occurs when the missingness of data is completely unrelated to any other variables, observed or unobserved.
+
+### b) State at Least 6 different techniques to handle missing data
+
+There are several techniques to handle missing data. Here are six commonly used methods:
+
+1. You can exclude people “pairwise” or “listwise”. This method involves removing entire cases that contain any missing values. Although it is a straightforward method, it can lead to a significant loss of data.
+2. Imputation: This method involves estimating missing values based on observed data. There are different types of imputation techniques, such as mean imputation, median imputation, and regression imputation.
+3. Maximum Likelihood Estimation (MLE): MLE is a statistical method used to estimate the parameters of a statistical model. This method can be used to handle missing data by incorporating missing data directly into the estimation process.
+4. Multiple Imputation: This method involves creating multiple imputed datasets to handle missing data. The imputations are based on the observed data and provide a range of plausible values for the missing data. The analysis is then performed on each imputed dataset, and the results are combined to provide a final estimate.
+5. Weighted Estimation: This method involves assigning weights to each observation based on the probability of being missing or not missing. The weights can be used to adjust the estimation of the parameters of the statistical model.
+6. Substitution: This method involves substituting a plausible value for the missing data based on external information, such as the average value of similar data points or expert knowledge. However, this method should be used with caution, as it may introduce bias into the analysis.
+
+### c) Determine the missingness in given dataset & apply appropriate technique with
+reasoning to handle missing data. (Data must not be removed or deleted)
+
+Looking for NA's in the dataset
+```{r}
+summary(joined_data)
+```
+
+
+
+As we can see there are  5 variables that have some NA's:
+The variables are:
+-NumCompaniesWorked
+-TotalWorkingYears
+-EnvironmentSatisfaction
+-JobSatisfaction
+-WorkLifeBalance
+
+#### Imputation for missing Values 
+As we can see there are two numerical variables and three categorical variables. We can see the distribution of the numerical variables to decide the way that we are going to work with missing values to reduce bias and for categorical variables we are going to use de mode.
+
+```{r}
+hist(joined_data$NumCompaniesWorked)
+```
+This variable has a skewness so it is better to use the median  to fill the missing values because it is a integer number 
+
+```{r}
+hist(joined_data$TotalWorkingYears)
+```
+The variable 'TotalWorkingYears' it is going to fill with the median too for the same reason as before. 
+
+
+```{r}
+sum(is.na(joined_data$NumCompaniesWorked))/4410*100
+sum(is.na(joined_data$TotalWorkingYears))/4410*100
+sum(is.na(joined_data$EnvironmentSatisfaction))/4410*100
+sum(is.na(joined_data$JobSatisfaction))/4410*100
+sum(is.na(joined_data$WorkLifeBalance))/4410*100
+```
+
+As we can see the percentage of missing values is very small that mean is not going to generate a lot of bias if we fill the missing values. 
+
+```{r}
+joined_data-> joined_data_filling 
+```
+
+
+```{r}
+joined_data_filling$NumCompaniesWorked[is.na(joined_data_filling$NumCompaniesWorked)]<-median(joined_data_filling$NumCompaniesWorked,na.rm=TRUE)
+sum(is.na(joined_data_filling$NumCompaniesWorked))
+```
+
+
+```{r}
+joined_data_filling$TotalWorkingYears[is.na(joined_data_filling$TotalWorkingYears)]<-median(joined_data_filling$TotalWorkingYears,na.rm=TRUE)
+sum(is.na(joined_data_filling$TotalWorkingYears))
+
+```
+
+
+
+```{r}
+# calculate the mode 
+mode_x <- as.numeric(names(sort(table(joined_data_filling$EnvironmentSatisfaction), decreasing = TRUE)[1]))
+
+# replace missing values with mode
+joined_data_filling$EnvironmentSatisfaction <- ifelse(is.na(joined_data_filling$EnvironmentSatisfaction), mode_x, joined_data_filling$EnvironmentSatisfaction)
+sum(is.na(joined_data_filling$EnvironmentSatisfaction))
+```
+
+
+```{r}
+# calculate the mode of x
+mode_x <- as.numeric(names(sort(table(joined_data_filling$JobSatisfaction), decreasing = TRUE)[1]))
+
+# replace missing values with mode
+joined_data_filling$JobSatisfaction<- ifelse(is.na(joined_data_filling$JobSatisfaction), mode_x, joined_data_filling$JobSatisfaction)
+sum(is.na(joined_data_filling$JobSatisfaction))
+```
+
+```{r}
+# calculate the mode 
+mode_x <- as.numeric(names(sort(table(joined_data_filling$WorkLifeBalance), decreasing = TRUE)[1]))
+
+# replace missing values with mode
+joined_data_filling$WorkLifeBalance<- ifelse(is.na(joined_data_filling$WorkLifeBalance), mode_x, joined_data_filling$WorkLifeBalance)
+sum(is.na(joined_data_filling$WorkLifeBalance))
+```
+
+```{r}
+sum(is.na(joined_data_filling))
+```
+So after finish with the missing values we are going to check the interactions terms.
+
+###  d) Keep another dataset with all rows with any missing value removed. So, you will
+have 2 datasets, one with missing values filled & other with missing values removed
+
+```{r}
+library("tidyr")
+summary(joined_data) 
+summary(joined_data %>% drop_na())
+
+```
+
+## 1)Interaction Analysis  
+
+# Looking every variable of the categorical 
+
+```{r}
+library(ggplot2)
+fit <- lm(Attrition ~ Education*JobSatisfaction, data = joined_data_filling)
+cat_plot(fit, pred =Education, modx = JobSatisfaction, interval = TRUE)
+```
+
+```{r}
+interaction.plot(
+  x.factor = Education,
+  trace.factor = JobSatisfaction,
+  response = Attrition, data=joined_data_filling)
+```
+
+
+
+```{r}
+xtabs(~Attrition + BusinessTravel, data = joined_data)
+```
+
+```{r}
+xtabs(~Attrition + Department, data = joined_data_missing)
+```
+
+```{r}
+xtabs(~Attrition + EducationField, data = joined_data_missing)
+```
+
+
+```{r}
+xtabs(~Attrition + Gender, data = joined_data_missing)
+```
+
+```{r}
+xtabs(~Attrition + JobRole, data = joined_data_missing)
+```
+
+
+```{r}
+xtabs(~Attrition + MaritalStatus, data = joined_data_missing)
+```
+
+
+```{r}
+xtabs(~Attrition + Education, data = joined_data_missing)
+```
+
+```{r}
+xtabs(~Attrition + EnvironmentSatisfaction, data = joined_data_missing)
+```
+
+```{r}
+xtabs(~Attrition + JobSatisfaction, data = joined_data_missing)
+```
+
+```{r}
+xtabs(~Attrition + WorkLifeBalance, data = joined_data_missing)
+```
+
+```{r}
+xtabs(~Attrition + JobInvolvement, data = joined_data_missing)
+```
+
+```{r}
+xtabs(~Attrition + PerformanceRating, data = joined_data_missing)
+```
+
+
+```{r}
+xtabs(~Attrition + JobLevel, data = joined_data_missing)
+```
+
+#### Split the dataset in Train and test sets 
+
+```{r}
+contrasts(joined_data_missing$Attrition)
+data <-sort(sample(nrow(joined_data_missing), nrow(joined_data_missing)*.8))
+train<-joined_data_missing[data,]
+test<-joined_data_missing[-data,]
+```
+```{r}
+str(train)
+```
+```{r}
+train1<- train[,-c(8,9,16)]
+str(train1)
+```
+
+#### Analysis of all variables in backward elimination with a complex model
+
+```{r}
+model<- glm(Attrition ~ .,family= binomial(link='logit'), data=train1)
+summary(model)
+```
+
+
+
+#### Interactors 
+
+```{r}
+
+model1<- glm(Attrition ~ Age+ WorkLifeBalance + MonthlyIncome  + Age*MonthlyIncome + YearsWithCurrManager + YearsSinceLastPromotion + YearsWithCurrManager+ YearsWithCurrManager*YearsSinceLastPromotion + YearsAtCompany+YearsAtCompany*YearsSinceLastPromotion,family= binomial(link='logit'), data=train1)
+summary(model1)
+pchisq(3169.5-2995.0, 3527-3522, lower.tail = FALSE)
+cor(train1$Age, train1$MonthlyIncome)
+install.packages("car")
+library(car)
+Anova(model1)
+```
+
+
+```{r}
+install.packages("effects")
+library(effects)
+library(ggeffects)
+library(interactions)
+library(ggplot2)
+```
+
+
+
+```{r}
+install.packages ("interactions")
+library(interactions)
+
+# linear model for Example 1
+example_1 <- lm(Atrittion ~ YearsAtCompany*YearsSinceLastPromotion  data = joined_data_filling)
+
+summary (example_1)
+```
+
+
+```{r}
+# plot the interaction
+interact_plot(example_1, pred = YearsAtCompany, mod×= YearsSinceLastPromotion, interval = TRUE)
+```
+```{r}
+library (ggplot2)
+interact_plot(example_1, pred = YearsAtCompany, mod =  YearsSinceLastPromotion, interval = TRUE) + theme (panel.grid.major =
+element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line (colour = "black"))
+```
+
+
+
+
+
+```{r}
+install.packages ("ggplot")
+library (ggplot2)
+ggplot(data = joined_data_filling, aes(x=Age,TotalworkingYears, color= Attrition))+geom_point()+
+stat_smooth(method='lm', formula= y ~ x, se = FALSE) +
+ggtitle('Interaction between Age and TotalworkingYears')
+```
+
+
+
+
+```{r}
+# Perform Shapiro-Wilk test
+test_result <- shapiro.test(joined_data_filling$Age)
+
+# Print the test results
+print(test_result)
+```
+
